@@ -1,0 +1,82 @@
+{
+	"name": "csv_dynamic",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "Blob_Wholesale",
+			"type": "LinkedServiceReference"
+		},
+		"parameters": {
+			"FolderName": {
+				"type": "string"
+			},
+			"Delimiter": {
+				"type": "string"
+			}
+		},
+		"annotations": [],
+		"type": "DelimitedText",
+		"typeProperties": {
+			"location": {
+				"type": "AzureBlobStorageLocation",
+				"folderPath": {
+					"value": "@dataset().FolderName",
+					"type": "Expression"
+				},
+				"container": "wholesalecompany"
+			},
+			"columnDelimiter": {
+				"value": "@dataset().Delimiter",
+				"type": "Expression"
+			},
+			"escapeChar": "\\",
+			"firstRowAsHeader": true,
+			"quoteChar": "\""
+		},
+		"schema": [
+			{
+				"name": "City Key",
+				"type": "String"
+			},
+			{
+				"name": "WWI City ID",
+				"type": "String"
+			},
+			{
+				"name": "City",
+				"type": "String"
+			},
+			{
+				"name": "State Province",
+				"type": "String"
+			},
+			{
+				"name": "Country",
+				"type": "String"
+			},
+			{
+				"name": "Continent",
+				"type": "String"
+			},
+			{
+				"name": "Sales Territory",
+				"type": "String"
+			},
+			{
+				"name": "Region",
+				"type": "String"
+			},
+			{
+				"name": "Subregion",
+				"type": "String"
+			},
+			{
+				"name": "Latest Recorded Population",
+				"type": "String"
+			},
+			{
+				"name": "Lineage Key",
+				"type": "String"
+			}
+		]
+	}
+}
