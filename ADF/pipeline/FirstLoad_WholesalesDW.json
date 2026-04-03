@@ -1,5 +1,5 @@
 {
-	"name": "pipeline1",
+	"name": "FirstLoad_WholesalesDW",
 	"properties": {
 		"activities": [
 			{
@@ -75,7 +75,10 @@
 								},
 								"sink": {
 									"type": "AzureSqlSink",
-									"preCopyScript": "TRUNCATE TABLE dbo.@{item().SQLTable}",
+									"preCopyScript": {
+										"value": "TRUNCATE TABLE dbo.@{item().SQLTable}",
+										"type": "Expression"
+									},
 									"writeBehavior": "insert",
 									"sqlWriterUseTableLock": false,
 									"disableMetricsCollection": false
