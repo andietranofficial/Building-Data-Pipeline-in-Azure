@@ -3,7 +3,7 @@
 	"properties": {
 		"activities": [
 			{
-				"name": "Lookup1",
+				"name": "Retrieve Metadata",
 				"type": "Lookup",
 				"dependsOn": [],
 				"policy": {
@@ -13,14 +13,29 @@
 					"secureOutput": false,
 					"secureInput": false
 				},
-				"userProperties": []
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "AzureSqlSource",
+						"sqlReaderQuery": "SELECT\r\n     b.[ObjectName]\r\n    ,FolderName = b.[ObjectValue]\r\n    ,SQLTable   = s.[ObjectValue]\r\n    ,Delimiter  = d.[ObjectValue]\r\nFROM [dbo].[Metadata_ADF] b\r\nJOIN [dbo].[Metadata_ADF] s ON b.[ObjectName] = s.[ObjectName]\r\nJOIN [dbo].[Metadata_ADF] d ON b.[ObjectName] = d.[ObjectName]\r\nWHERE   b.[SourceType] = 'input-source'\r\n    AND s.[SourceType] = 'SQLTable'\r\n    AND d.[SourceType] = 'Delimiter';",
+						"queryTimeout": "02:00:00",
+						"partitionOption": "None"
+					},
+					"dataset": {
+						"referenceName": "sql_dynamic",
+						"type": "DatasetReference",
+						"parameters": {
+							"TableName": "_netSet"
+						}
+					}
+				}
 			},
 			{
-				"name": "ForEach1",
+				"name": "Loop over Metadata",
 				"type": "ForEach",
 				"dependsOn": [
 					{
-						"activity": "Lookup1",
+						"activity": "Retrieve Metadata",
 						"dependencyConditions": [
 							"Succeeded"
 						]
@@ -28,9 +43,13 @@
 				],
 				"userProperties": [],
 				"typeProperties": {
+					"items": {
+						"value": "@activity('Retrieve Metadata').output.value",
+						"type": "Expression"
+					},
 					"activities": [
 						{
-							"name": "Copy data1",
+							"name": "Copy Blob to SQL",
 							"type": "Copy",
 							"dependsOn": [],
 							"policy": {
@@ -42,8 +61,57 @@
 							},
 							"userProperties": [],
 							"typeProperties": {
-								"enableStaging": false
-							}
+								"source": {
+									"type": "DelimitedTextSource",
+									"storeSettings": {
+										"type": "AzureBlobStorageReadSettings",
+										"recursive": true,
+										"wildcardFileName": "*.csv",
+										"enablePartitionDiscovery": false
+									},
+									"formatSettings": {
+										"type": "DelimitedTextReadSettings"
+									}
+								},
+								"sink": {
+									"type": "AzureSqlSink",
+									"preCopyScript": "TRUNCATE TABLE dbo.@{item().SQLTable}",
+									"writeBehavior": "insert",
+									"sqlWriterUseTableLock": false,
+									"disableMetricsCollection": false
+								},
+								"enableStaging": false,
+								"translator": {
+									"type": "TabularTranslator",
+									"typeConversion": true,
+									"typeConversionSettings": {
+										"allowDataTruncation": true,
+										"treatBooleanAsNumber": false
+									}
+								}
+							},
+							"inputs": [
+								{
+									"referenceName": "csv_dynamic",
+									"type": "DatasetReference",
+									"parameters": {
+										"FolderName": "@{item().FolderName}",
+										"Delimiter": "@{item().Delimiter}"
+									}
+								}
+							],
+							"outputs": [
+								{
+									"referenceName": "sql_dynamic",
+									"type": "DatasetReference",
+									"parameters": {
+										"TableName": {
+											"value": "@{item().SQLTable}",
+											"type": "Expression"
+										}
+									}
+								}
+							]
 						}
 					]
 				}
